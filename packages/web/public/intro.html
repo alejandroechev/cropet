@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CropET — Guide to Evapotranspiration &amp; FAO-56 Penman-Monteith</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f7f5; --fg: #1a2e1a; --fg2: #4a5e4a;
+    --accent: #2d7d2d; --accent2: #1a5c1a; --border: #d0ddd0;
+    --code-bg: #eef4ee; --eq-bg: #f0f6f0; --card-bg: #f8fbf8;
+  }
+  [data-theme="dark"] {
+    --bg: #0d1a0d; --bg2: #162216; --fg: #d4e8d4; --fg2: #8aaa8a;
+    --accent: #5cb85c; --accent2: #7dda7d; --border: #2a3e2a;
+    --code-bg: #1a2e1a; --eq-bg: #162816; --card-bg: #142014;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.7; transition: background 0.3s, color 0.3s;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 24px 20px 60px; }
+  .top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; margin-bottom: 20px; border-bottom: 1px solid var(--border);
+  }
+  .top-bar a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+  .top-bar a:hover { text-decoration: underline; }
+  .theme-toggle {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 12px; cursor: pointer; color: var(--fg); font-size: 0.85rem;
+  }
+  .hero {
+    text-align: center; padding: 48px 0 36px;
+    border-bottom: 1px solid var(--border); margin-bottom: 36px;
+  }
+  .hero h1 { font-size: 2.2rem; margin-bottom: 8px; }
+  .hero .tagline { font-size: 1.15rem; color: var(--fg2); }
+  h2 {
+    font-size: 1.4rem; margin: 40px 0 12px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--accent);
+    color: var(--accent2);
+  }
+  [data-theme="dark"] h2 { color: var(--accent); }
+  h3 { font-size: 1.1rem; margin: 20px 0 8px; color: var(--fg); }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0 8px 24px; }
+  li { margin: 4px 0; }
+  code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-size: 0.9em; font-family: 'Consolas', 'Fira Code', monospace;
+  }
+  .equation {
+    background: var(--eq-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin: 16px 0; text-align: center;
+    font-family: 'Consolas', 'Fira Code', monospace; font-size: 0.95rem;
+    overflow-x: auto;
+  }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; margin: 16px 0;
+  }
+  .glossary-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  .glossary-table th, .glossary-table td {
+    text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .glossary-table th { color: var(--accent2); font-size: 0.85rem; text-transform: uppercase; }
+  [data-theme="dark"] .glossary-table th { color: var(--accent); }
+  .step-num {
+    display: inline-block; width: 28px; height: 28px; line-height: 28px;
+    text-align: center; background: var(--accent); color: #fff;
+    border-radius: 50%; font-size: 0.85rem; font-weight: 700; margin-right: 8px;
+  }
+  .premium-badge {
+    display: inline-block; background: var(--accent); color: #fff;
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; font-weight: 700; vertical-align: middle;
+    margin-left: 6px;
+  }
+  .ref-list { list-style: none; margin-left: 0; }
+  .ref-list li { margin: 8px 0; padding-left: 20px; position: relative; }
+  .ref-list li::before { content: '📄'; position: absolute; left: 0; }
+  footer {
+    text-align: center; padding: 24px 0; margin-top: 40px;
+    border-top: 1px solid var(--border); color: var(--fg2); font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="top-bar">
+  <a href="/">← Back to CropET</a>
+  <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>🌾 CropET</h1>
+  <p class="tagline">Free, browser-based reference evapotranspiration calculator<br>powered by the FAO-56 Penman-Monteith method</p>
+</div>
+
+<!-- 1. What is Evapotranspiration? -->
+<h2>1. What is Evapotranspiration?</h2>
+<p>
+  Evapotranspiration (ET) is the combined process by which water moves from the Earth's surface to the atmosphere.
+  It has two components:
+</p>
+<ul>
+  <li><strong>Evaporation</strong> — water turning to vapor from soil, open water, and wet plant surfaces.</li>
+  <li><strong>Transpiration</strong> — water drawn up through plant roots, transported through stems, and released through leaf stomata.</li>
+</ul>
+<p>
+  ET is the largest consumer of water in agriculture, often accounting for <strong>60–90%</strong> of all water applied to fields.
+  Accurate ET estimation is critical for:
+</p>
+<ul>
+  <li><strong>Irrigation scheduling</strong> — applying the right amount of water at the right time</li>
+  <li><strong>Water resource planning</strong> — allocating river and reservoir water among competing uses</li>
+  <li><strong>Drought monitoring</strong> — tracking water stress across regions</li>
+  <li><strong>Climate studies</strong> — understanding water and energy balance in the atmosphere</li>
+</ul>
+
+<!-- 2. Reference ET (ETo) -->
+<h2>2. Reference Evapotranspiration (ETo)</h2>
+<p>
+  Rather than estimating ET for every crop in every condition, the FAO standardized a <strong>reference crop</strong>:
+  a hypothetical grass surface 12 cm tall, actively growing, completely shading the ground, and well-watered.
+</p>
+<p>
+  The rate of ET from this reference surface is called <strong>ETo</strong> (reference evapotranspiration).
+  It depends only on weather — not on the specific crop being grown.
+</p>
+<div class="card">
+  <strong>Why standardize?</strong> Because ETo provides a consistent baseline.
+  To estimate water need for any specific crop, you multiply ETo by a <em>crop coefficient</em> (Kc):
+  <br><br>
+  <code>ETc = Kc × ETo</code>
+  <br><br>
+  This two-step approach separates weather effects from crop effects, making the method universally applicable.
+</div>
+
+<!-- 3. The Penman-Monteith Equation -->
+<h2>3. The FAO-56 Penman-Monteith Equation</h2>
+<p>
+  The Penman-Monteith equation is the internationally recommended method for computing ETo.
+  It combines energy balance (radiation) with aerodynamic transport (wind and humidity) into a single formula:
+</p>
+<div class="equation">
+  ETo = [ 0.408 Δ (Rn − G) + γ (900 / (T + 273)) u₂ (eₛ − eₐ) ] / [ Δ + γ (1 + 0.34 u₂) ]
+</div>
+
+<h3>Term-by-term breakdown</h3>
+<table class="glossary-table">
+  <tr><th>Symbol</th><th>Meaning</th><th>Units</th></tr>
+  <tr><td><code>ETo</code></td><td>Reference evapotranspiration</td><td>mm/day</td></tr>
+  <tr><td><code>Δ</code></td><td>Slope of the saturation vapor pressure–temperature curve</td><td>kPa/°C</td></tr>
+  <tr><td><code>Rn</code></td><td>Net radiation at the crop surface</td><td>MJ/m²/day</td></tr>
+  <tr><td><code>G</code></td><td>Soil heat flux density (≈ 0 for daily calculations)</td><td>MJ/m²/day</td></tr>
+  <tr><td><code>γ</code></td><td>Psychrometric constant</td><td>kPa/°C</td></tr>
+  <tr><td><code>T</code></td><td>Mean daily air temperature at 2 m height</td><td>°C</td></tr>
+  <tr><td><code>u₂</code></td><td>Wind speed at 2 m height</td><td>m/s</td></tr>
+  <tr><td><code>eₛ</code></td><td>Saturation vapor pressure</td><td>kPa</td></tr>
+  <tr><td><code>eₐ</code></td><td>Actual vapor pressure</td><td>kPa</td></tr>
+</table>
+
+<div class="card">
+  The <strong>numerator</strong> has two parts:
+  <ul>
+    <li><strong>Radiation term</strong>: <code>0.408 Δ (Rn − G)</code> — energy available from net radiation drives evaporation.</li>
+    <li><strong>Aerodynamic term</strong>: <code>γ (900/(T+273)) u₂ (eₛ − eₐ)</code> — dry, windy air pulls moisture away from the surface.</li>
+  </ul>
+  The <strong>denominator</strong> <code>Δ + γ(1 + 0.34u₂)</code> weights the two terms based on temperature and wind.
+</div>
+
+<!-- 4. Solar Radiation -->
+<h2>4. Solar Radiation</h2>
+<p>
+  Radiation is the primary energy source driving evapotranspiration.
+  CropET estimates it step by step from your site's latitude and sunshine data:
+</p>
+
+<h3>Extraterrestrial Radiation (Ra)</h3>
+<p>
+  The solar energy reaching the top of the atmosphere, computed from latitude and day of year.
+  It varies with season and location — more at the equator, more in summer.
+</p>
+
+<h3>Solar Radiation (Rs)</h3>
+<p>
+  The fraction of Ra that reaches the ground, estimated from sunshine hours:
+</p>
+<div class="equation">
+  Rs = (a + b × n/N) × Ra
+</div>
+<p>
+  where <code>n</code> = actual sunshine hours, <code>N</code> = maximum possible sunshine hours,
+  and <code>a</code>, <code>b</code> are regression constants (typically 0.25 and 0.50).
+</p>
+
+<h3>Net Radiation (Rn)</h3>
+<p>
+  The balance of incoming and outgoing energy at the crop surface:
+</p>
+<ul>
+  <li><strong>Net shortwave</strong>: <code>Rns = (1 − α) × Rs</code> where α = 0.23 (grass albedo)</li>
+  <li><strong>Net longwave</strong>: <code>Rnl</code> — thermal radiation emitted by the earth, reduced by cloud cover and humidity</li>
+  <li><strong>Net radiation</strong>: <code>Rn = Rns − Rnl</code></li>
+</ul>
+
+<!-- 5. Vapor Pressure -->
+<h2>5. Vapor Pressure</h2>
+<p>
+  The vapor pressure deficit <code>(eₛ − eₐ)</code> is the "drying power" of the air — the larger the deficit,
+  the more water the atmosphere can absorb.
+</p>
+
+<h3>Saturation Vapor Pressure (eₛ)</h3>
+<div class="equation">
+  e°(T) = 0.6108 × exp( 17.27 T / (T + 237.3) )
+</div>
+<p>
+  This is the maximum moisture the air can hold at temperature T (°C).
+  For daily calculations, FAO-56 recommends averaging e°(Tmax) and e°(Tmin).
+</p>
+
+<h3>Actual Vapor Pressure (eₐ)</h3>
+<p>
+  The moisture actually present in the air. Computed from relative humidity:
+</p>
+<div class="equation">
+  eₐ = eₛ × RH / 100
+</div>
+<p>
+  Alternatively, eₐ can be derived from dew point temperature using the same saturation formula.
+</p>
+
+<h3>Slope of the VP Curve (Δ)</h3>
+<div class="equation">
+  Δ = 4098 × e°(T) / (T + 237.3)²
+</div>
+<p>
+  This describes how rapidly saturation VP changes with temperature.
+  At higher temperatures, Δ is larger, meaning more energy goes into evaporation.
+</p>
+
+<!-- 6. Psychrometric Constant -->
+<h2>6. Psychrometric Constant (γ)</h2>
+<div class="equation">
+  γ = 0.665 × 10⁻³ × P
+</div>
+<p>
+  where <code>P</code> is atmospheric pressure in kPa. Pressure depends on altitude:
+</p>
+<div class="equation">
+  P = 101.3 × ((293 − 0.0065 z) / 293)^5.26
+</div>
+<p>
+  At sea level, γ ≈ 0.0674 kPa/°C. At higher elevations, lower pressure yields a smaller γ,
+  slightly increasing the relative importance of the radiation term in the PM equation.
+</p>
+
+<!-- 7. Crop Coefficients -->
+<h2>7. Crop Coefficients (Kc) <span class="premium-badge">Coming Soon</span></h2>
+<p>
+  ETo tells you how much water a reference grass surface would use.
+  To estimate the actual water need of a specific crop, multiply by the crop coefficient:
+</p>
+<div class="equation">
+  ETc = Kc × ETo
+</div>
+<p>
+  Kc varies by crop type and growth stage:
+</p>
+<ul>
+  <li><strong>Kc ini</strong> (initial) — seedling / bare soil period, typically 0.3–0.5</li>
+  <li><strong>Kc mid</strong> (mid-season) — full canopy cover, typically 0.9–1.2</li>
+  <li><strong>Kc end</strong> (late season) — senescence / harvest, typically 0.3–0.9</li>
+</ul>
+<p>
+  FAO-56 provides Kc values for over 100 crops. Crop coefficient support will be available
+  in a future version of CropET.
+</p>
+
+<!-- 8. How to Use CropET -->
+<h2>8. How to Use CropET</h2>
+<div class="card">
+  <p><span class="step-num">1</span><strong>Set your location</strong> — enter latitude (°N) and altitude (m above sea level).</p>
+  <p><span class="step-num">2</span><strong>Enter climate data</strong> — paste CSV with columns: Date, Tmax (°C), Tmin (°C), RH (%), Wind (m/s), Sunshine (hrs).</p>
+  <p><span class="step-num">3</span><strong>Compute</strong> — click "▶ Compute ETo" to run the FAO-56 Penman-Monteith calculation.</p>
+  <p><span class="step-num">4</span><strong>Review results</strong> — view the daily ETo chart, daily table, and monthly summary.</p>
+  <p><span class="step-num">5</span><strong>Export</strong> — download daily or monthly CSV, or export the chart as PNG.</p>
+</div>
+<p>
+  <strong>Data sources:</strong> You can obtain climate data from national weather services,
+  <a href="https://www.fao.org/land-water/databases-and-software/climwat-for-cropwat/en/" target="_blank">FAO CLIMWAT</a>,
+  or <a href="https://power.larc.nasa.gov/" target="_blank">NASA POWER</a>.
+</p>
+
+<!-- 9. Glossary -->
+<h2>9. Glossary</h2>
+<table class="glossary-table">
+  <tr><th>Term</th><th>Definition</th></tr>
+  <tr><td><strong>ETo</strong></td><td>Reference evapotranspiration — the ET rate from a well-watered grass reference surface (mm/day).</td></tr>
+  <tr><td><strong>ETc</strong></td><td>Crop evapotranspiration — the actual water need of a specific crop: ETc = Kc × ETo.</td></tr>
+  <tr><td><strong>Rn</strong></td><td>Net radiation at the crop surface — the balance of incoming and outgoing radiation energy (MJ/m²/day).</td></tr>
+  <tr><td><strong>G</strong></td><td>Soil heat flux density — energy stored in or released from the soil (≈ 0 for daily time steps).</td></tr>
+  <tr><td><strong>γ</strong></td><td>Psychrometric constant — relates partial pressure of water vapor to air temperature (~0.067 kPa/°C at sea level).</td></tr>
+  <tr><td><strong>Δ</strong></td><td>Slope of the saturation vapor pressure curve — rate of change of eₛ with temperature (kPa/°C).</td></tr>
+  <tr><td><strong>eₛ</strong></td><td>Saturation vapor pressure — the maximum moisture air can hold at a given temperature (kPa).</td></tr>
+  <tr><td><strong>eₐ</strong></td><td>Actual vapor pressure — the moisture actually present in the air (kPa).</td></tr>
+  <tr><td><strong>Kc</strong></td><td>Crop coefficient — dimensionless multiplier to convert ETo to crop-specific water need.</td></tr>
+  <tr><td><strong>u₂</strong></td><td>Wind speed measured at 2 m height (m/s).</td></tr>
+  <tr><td><strong>Ra</strong></td><td>Extraterrestrial radiation — solar energy at the top of the atmosphere (MJ/m²/day).</td></tr>
+  <tr><td><strong>Rs</strong></td><td>Solar radiation reaching the earth's surface (MJ/m²/day).</td></tr>
+</table>
+
+<!-- 10. References -->
+<h2>10. References</h2>
+<ul class="ref-list">
+  <li>
+    <strong>FAO Irrigation and Drainage Paper 56</strong> — Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998).
+    <em>Crop evapotranspiration: Guidelines for computing crop water requirements.</em>
+    Food and Agriculture Organization of the United Nations, Rome.
+    <br><a href="https://www.fao.org/3/x0490e/x0490e00.htm" target="_blank">fao.org/3/x0490e</a>
+  </li>
+  <li>
+    <strong>CROPWAT 8.0</strong> — FAO decision support tool for irrigation planning based on the PM method.
+    <br><a href="https://www.fao.org/land-water/databases-and-software/cropwat/en/" target="_blank">fao.org — CROPWAT</a>
+  </li>
+  <li>
+    <strong>CLIMWAT 2.0</strong> — FAO database of observed agroclimatic data for CROPWAT, covering 5,000+ stations worldwide.
+    <br><a href="https://www.fao.org/land-water/databases-and-software/climwat-for-cropwat/en/" target="_blank">fao.org — CLIMWAT</a>
+  </li>
+  <li>
+    <strong>NASA POWER</strong> — Prediction Of Worldwide Energy Resources, providing solar and meteorological data for any location.
+    <br><a href="https://power.larc.nasa.gov/" target="_blank">power.larc.nasa.gov</a>
+  </li>
+</ul>
+
+<footer>
+  CropET is free and open-source. All equations are from FAO Paper 56 (public domain, UN FAO).
+</footer>
+
+</div>
+
+<script>
+function toggleTheme() {
+  const body = document.body.parentElement;
+  const btn = document.querySelector('.theme-toggle');
+  if (body.getAttribute('data-theme') === 'dark') {
+    body.removeAttribute('data-theme');
+    btn.textContent = '🌙 Dark';
+  } else {
+    body.setAttribute('data-theme', 'dark');
+    btn.textContent = '☀ Light';
+  }
+}
+// Respect system preference
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.querySelector('.theme-toggle');
+    if (btn) btn.textContent = '☀ Light';
+  });
+}
+</script>
+</body>
+</html>

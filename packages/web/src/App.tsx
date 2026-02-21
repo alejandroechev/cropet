@@ -87,6 +87,9 @@ export default function App() {
       <div className="toolbar">
         <h1>🌾 CropET — FAO-56 ETo Calculator</h1>
         <div className="toolbar-actions">
+          <button onClick={() => window.open('/intro.html', '_blank')}>
+            📖 Guide
+          </button>
           <button onClick={() => setDark(!dark)}>
             {dark ? "☀ Light" : "🌙 Dark"}
           </button>
