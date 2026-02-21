@@ -11,6 +11,7 @@ import {
   type MonthlySummary,
 } from "@cropet/engine";
 import { EToChart } from "./EToChart";
+import { SAMPLES } from "./samples";
 
 const SAMPLE_CSV = `Date,Tmax,Tmin,RH,Wind,Sunshine
 2024-07-01,34.8,25.6,64,2.06,9.25
@@ -29,7 +30,19 @@ export default function App() {
   const [results, setResults] = useState<EToResult[]>([]);
   const [monthly, setMonthly] = useState<MonthlySummary[]>([]);
   const [status, setStatus] = useState("");
+  const [samplesOpen, setSamplesOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
+
+  const loadSample = (index: number) => {
+    const s = SAMPLES[index];
+    setCsv(s.csv);
+    setLat(String(s.latitude));
+    setAlt(String(s.altitude));
+    setResults([]);
+    setMonthly([]);
+    setStatus(`📂 Loaded "${s.name}" — click Compute ETo to run`);
+    setSamplesOpen(false);
+  };
 
   const compute = useCallback(() => {
     try {
@@ -87,6 +100,35 @@ export default function App() {
       <div className="toolbar">
         <h1>🌾 CropET — FAO-56 ETo Calculator</h1>
         <div className="toolbar-actions">
+          <div className="dropdown" style={{ position: "relative" }}>
+            <button onClick={() => setSamplesOpen(!samplesOpen)}>
+              📂 Samples
+            </button>
+            {samplesOpen && (
+              <div className="dropdown-menu" style={{
+                position: "absolute", top: "100%", right: 0, zIndex: 100,
+                background: "var(--bg2)", border: "1px solid var(--border)",
+                borderRadius: 6, padding: 4, minWidth: 300, marginTop: 4,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              }}>
+                {SAMPLES.map((s, i) => (
+                  <button key={i} onClick={() => loadSample(i)} style={{
+                    display: "block", width: "100%", textAlign: "left",
+                    padding: "8px 12px", border: "none", borderRadius: 4,
+                    background: "transparent", color: "var(--fg)",
+                    cursor: "pointer", fontSize: "0.85rem",
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--bg3)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <strong>{s.name}</strong>
+                    <br />
+                    <span style={{ fontSize: "0.78rem", color: "var(--fg2)" }}>{s.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button onClick={() => window.open('/intro.html', '_blank')}>
             📖 Guide
           </button>
