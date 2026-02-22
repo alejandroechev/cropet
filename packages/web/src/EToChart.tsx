@@ -30,7 +30,7 @@ export function EToChart({ data }: Props) {
         />
         <YAxis
           tick={{ fontSize: 12, fill: "var(--fg2)" }}
-          label={{ value: "ETo (mm/day)", angle: -90, position: "insideLeft", style: { fontSize: 12 } }}
+          label={{ value: "ETo (mm/day)", angle: -90, position: "insideLeft", style: { fontSize: 12, fill: "var(--fg2)" } }}
         />
         <Tooltip
           contentStyle={{ background: "var(--bg)", border: "1px solid var(--border)" }}
