@@ -2,7 +2,7 @@
 
 **Modern web-based reference evapotranspiration (ETo) calculator — replacing CROPWAT for the 21st century.**
 
-![CropET Screenshot](docs/screenshot.png) <!-- TODO: add screenshot -->
+![CropET Screenshot](docs/screenshot.png)
 
 ---
 
