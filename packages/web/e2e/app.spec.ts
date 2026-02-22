@@ -291,15 +291,15 @@ test.describe("UI Features", () => {
   });
 
   test("theme toggle switches light/dark", async ({ page }) => {
-    const app = page.locator(".app");
-    // Initially light (no .dark class)
-    await expect(app).not.toHaveClass(/dark/);
+    // Initially light
+    const html = page.locator("html");
+    await expect(html).toHaveAttribute("data-theme", "light");
     // Click dark toggle
     await page.getByRole("button", { name: /Dark/i }).click();
-    await expect(app).toHaveClass(/dark/);
+    await expect(html).toHaveAttribute("data-theme", "dark");
     // Click light toggle
     await page.getByRole("button", { name: /Light/i }).click();
-    await expect(app).not.toHaveClass(/dark/);
+    await expect(html).toHaveAttribute("data-theme", "light");
   });
 
   test("Guide button exists", async ({ page }) => {
@@ -315,16 +315,20 @@ test.describe("UI Features", () => {
     await expect(items).toHaveCount(5);
   });
 
-  test("export buttons appear after compute", async ({ page }) => {
-    // No export bar before compute
-    await expect(page.locator(".export-bar")).not.toBeVisible();
+  test("in-place export buttons appear after compute", async ({ page }) => {
     await clickCompute(page);
-    // Export bar should appear
-    const exportBar = page.locator(".export-bar");
-    await expect(exportBar).toBeVisible();
-    await expect(exportBar.getByRole("button", { name: /Daily CSV/i })).toBeVisible();
-    await expect(exportBar.getByRole("button", { name: /Monthly CSV/i })).toBeVisible();
-    await expect(exportBar.getByRole("button", { name: /Export Chart/i })).toBeVisible();
+    // Chart inline exports
+    const chartHeader = page.locator(".chart-container .section-header");
+    await expect(chartHeader.getByRole("button", { name: /PNG/i })).toBeVisible();
+    await expect(chartHeader.getByRole("button", { name: /SVG/i })).toBeVisible();
+    // Daily table inline CSV
+    const dailyHeader = page.locator(".table-container").first().locator(".section-header");
+    await expect(dailyHeader.getByRole("button", { name: /CSV/i })).toBeVisible();
+    // Monthly table inline CSV
+    const monthlyHeader = page.locator(".table-container").nth(1).locator(".section-header");
+    await expect(monthlyHeader.getByRole("button", { name: /CSV/i })).toBeVisible();
+    // No export-bar should exist
+    await expect(page.locator(".export-bar")).toHaveCount(0);
   });
 
   test("responsive: location panel wraps on narrow viewport", async ({ page }) => {
@@ -333,6 +337,90 @@ test.describe("UI Features", () => {
     await expect(panel).toBeVisible();
     // The panel uses flex-wrap, so it should still render all elements
     await expect(panel.locator('input[type="number"]')).toHaveCount(2);
-    await expect(panel.getByRole("button", { name: /Compute/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Compute/i })).toBeVisible();
+  });
+});
+
+// ─── Dark Theme ────────────────────────────────────────────────
+
+test.describe("Dark Theme", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("dark theme applies dark background to body", async ({ page }) => {
+    await page.getByRole("button", { name: /Dark/i }).click();
+    const bgColor = await page.evaluate(() =>
+      getComputedStyle(document.body).backgroundColor
+    );
+    // #1a1a2e = rgb(26, 26, 46)
+    expect(bgColor).toBe("rgb(26, 26, 46)");
+  });
+
+  test("dark theme persists across reload", async ({ page }) => {
+    await page.getByRole("button", { name: /Dark/i }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // Toggle text should show Light option
+    await expect(page.getByRole("button", { name: /Light/i })).toBeVisible();
+  });
+});
+
+// ─── File Upload ───────────────────────────────────────────────
+
+test.describe("File Upload", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("Upload button is visible in toolbar", async ({ page }) => {
+    const uploadBtn = page.getByRole("button", { name: /Upload/i });
+    await expect(uploadBtn).toBeVisible();
+  });
+
+  test("file upload loads CSV into textarea", async ({ page }) => {
+    const csvContent = `Date,Tmax,Tmin,RH,Wind,Sunshine\n2024-08-01,30.0,20.0,50,1.5,8.0`;
+    const fileInput = page.locator('[data-testid="file-input"]');
+    // Create a buffer and set file
+    await fileInput.setInputFiles({
+      name: "test-data.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from(csvContent),
+    });
+    // Status should confirm upload
+    await expect(page.locator(".status")).toContainText('Loaded "test-data.csv"');
+    // CSV textarea should contain uploaded data
+    const textarea = page.locator("textarea.csv-input");
+    const value = await textarea.inputValue();
+    expect(value).toContain("2024-08-01");
+  });
+});
+
+// ─── In-Place Exports ──────────────────────────────────────────
+
+test.describe("In-Place Exports", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("chart has PNG and SVG export buttons", async ({ page }) => {
+    await clickCompute(page);
+    const chartSection = page.locator(".chart-container .inline-actions");
+    await expect(chartSection).toBeVisible();
+    await expect(chartSection.getByRole("button", { name: /PNG/i })).toBeVisible();
+    await expect(chartSection.getByRole("button", { name: /SVG/i })).toBeVisible();
+  });
+
+  test("daily table has inline CSV button", async ({ page }) => {
+    await clickCompute(page);
+    const dailyActions = page.locator(".table-container").first().locator(".inline-actions");
+    await expect(dailyActions.getByRole("button", { name: /CSV/i })).toBeVisible();
+  });
+
+  test("monthly table has inline CSV button", async ({ page }) => {
+    await clickCompute(page);
+    const monthlyActions = page.locator(".table-container").nth(1).locator(".inline-actions");
+    await expect(monthlyActions.getByRole("button", { name: /CSV/i })).toBeVisible();
   });
 });

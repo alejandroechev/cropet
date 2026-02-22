@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   parseClimateCSV,
   computeEToSeries,
@@ -23,7 +23,7 @@ const SAMPLE_CSV = `Date,Tmax,Tmin,RH,Wind,Sunshine
 2024-07-07,35.5,26.5,58,2.40,10.00`;
 
 export default function App() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => localStorage.getItem("cropet-theme") === "dark");
   const [csv, setCsv] = useState(SAMPLE_CSV);
   const [lat, setLat] = useState("13.73");
   const [alt, setAlt] = useState("2");
@@ -32,6 +32,12 @@ export default function App() {
   const [status, setStatus] = useState("");
   const [samplesOpen, setSamplesOpen] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    localStorage.setItem("cropet-theme", dark ? "dark" : "light");
+  }, [dark]);
 
   const loadSample = (index: number) => {
     const s = SAMPLES[index];
@@ -42,6 +48,21 @@ export default function App() {
     setMonthly([]);
     setStatus(`📂 Loaded "${s.name}" — click Compute ETo to run`);
     setSamplesOpen(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setCsv(text);
+      setResults([]);
+      setMonthly([]);
+      setStatus(`📂 Loaded "${file.name}" — click Compute ETo to run`);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
   };
 
   const compute = useCallback(() => {
@@ -95,18 +116,39 @@ export default function App() {
     img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
   };
 
+  const exportSVG = () => {
+    const svg = chartRef.current?.querySelector("svg");
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.download = "eto-chart.svg";
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className={dark ? "app dark" : "app"}>
+    <div className="app">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.txt"
+        style={{ display: "none" }}
+        onChange={handleFileUpload}
+        data-testid="file-input"
+      />
       <div className="toolbar">
-        <h1>🌾 CropET — FAO-56 ETo Calculator</h1>
-        <div className="toolbar-actions">
+        <div className="toolbar-left">
+          <h1>🌾 CropET — FAO-56 ETo Calculator</h1>
           <div className="dropdown" style={{ position: "relative" }}>
             <button onClick={() => setSamplesOpen(!samplesOpen)}>
               📂 Samples
             </button>
             {samplesOpen && (
               <div className="dropdown-menu" style={{
-                position: "absolute", top: "100%", right: 0, zIndex: 100,
+                position: "absolute", top: "100%", left: 0, zIndex: 100,
                 background: "var(--bg2)", border: "1px solid var(--border)",
                 borderRadius: 6, padding: 4, minWidth: 300, marginTop: 4,
                 boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
@@ -129,6 +171,14 @@ export default function App() {
               </div>
             )}
           </div>
+          <button onClick={() => fileInputRef.current?.click()}>
+            📂 Upload
+          </button>
+          <button className="primary" onClick={compute}>
+            ▶ Compute ETo
+          </button>
+        </div>
+        <div className="toolbar-right">
           <button onClick={() => window.open('/intro.html', '_blank')}>
             📖 Guide
           </button>
@@ -150,9 +200,6 @@ export default function App() {
           Altitude (m)
           <input type="number" step="1" value={alt} onChange={e => setAlt(e.target.value)} />
         </label>
-        <button className="primary" onClick={compute}>
-          ▶ Compute ETo
-        </button>
       </div>
 
       <div className="data-section">
@@ -169,25 +216,26 @@ export default function App() {
 
       {results.length > 0 && (
         <>
-          <div className="export-bar">
-            <button onClick={() => download(exportDailyCSV(results), "eto-daily.csv")}>
-              📥 Daily CSV
-            </button>
-            <button onClick={() => download(exportMonthlyCSV(monthly), "eto-monthly.csv")}>
-              📥 Monthly CSV
-            </button>
-            <button onClick={exportPNG}>🖼 Export Chart PNG</button>
-          </div>
-
           <div className="chart-container" ref={chartRef}>
-            <h3>ETo Time Series</h3>
+            <div className="section-header">
+              <h3>ETo Time Series</h3>
+              <div className="inline-actions">
+                <button onClick={exportPNG}>🖼 PNG</button>
+                <button onClick={exportSVG}>📐 SVG</button>
+              </div>
+            </div>
             <EToChart data={results} />
           </div>
 
           <div className="table-container">
-            <h3 style={{ marginBottom: 8, fontSize: "0.95rem", color: "var(--fg2)" }}>
-              Daily Results
-            </h3>
+            <div className="section-header">
+              <h3>Daily Results</h3>
+              <div className="inline-actions">
+                <button onClick={() => download(exportDailyCSV(results), "eto-daily.csv")}>
+                  📥 CSV
+                </button>
+              </div>
+            </div>
             <table>
               <thead>
                 <tr>
@@ -214,9 +262,14 @@ export default function App() {
 
           {monthly.length > 0 && (
             <div className="table-container">
-              <h3 style={{ marginBottom: 8, fontSize: "0.95rem", color: "var(--fg2)" }}>
-                Monthly Summary
-              </h3>
+              <div className="section-header">
+                <h3>Monthly Summary</h3>
+                <div className="inline-actions">
+                  <button onClick={() => download(exportMonthlyCSV(monthly), "eto-monthly.csv")}>
+                    📥 CSV
+                  </button>
+                </div>
+              </div>
               <table>
                 <thead>
                   <tr>
