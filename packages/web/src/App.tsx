@@ -132,6 +132,9 @@ export default function App() {
           <button onClick={() => window.open('/intro.html', '_blank')}>
             📖 Guide
           </button>
+          <button onClick={() => window.open('https://github.com/alejandroechev/cropet/issues/new', '_blank')} title="Feedback">
+            💬 Feedback
+          </button>
           <button onClick={() => setDark(!dark)}>
             {dark ? "☀ Light" : "🌙 Dark"}
           </button>
