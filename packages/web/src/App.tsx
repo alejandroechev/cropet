@@ -206,7 +206,7 @@ export default function App() {
           <button onClick={() => window.open('https://github.com/alejandroechev/cropet/issues/new', '_blank')} title="Feedback">
             💬 Feedback
           </button>
-          <button onClick={() => setDark(!dark)}>
+          <button onClick={() => setDark(!dark)} title="Toggle theme">
             {dark ? "☀️" : "🌙"}
           </button>
         </div>

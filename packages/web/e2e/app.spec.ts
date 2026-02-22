@@ -294,11 +294,11 @@ test.describe("UI Features", () => {
     // Initially light
     const html = page.locator("html");
     await expect(html).toHaveAttribute("data-theme", "light");
-    // Click dark toggle
-    await page.getByRole("button", { name: /Dark/i }).click();
+    // Click toggle (icon-only button)
+    await page.click("button[title='Toggle theme']");
     await expect(html).toHaveAttribute("data-theme", "dark");
-    // Click light toggle
-    await page.getByRole("button", { name: /Light/i }).click();
+    // Click toggle again
+    await page.click("button[title='Toggle theme']");
     await expect(html).toHaveAttribute("data-theme", "light");
   });
 
@@ -349,7 +349,7 @@ test.describe("Dark Theme", () => {
   });
 
   test("dark theme applies dark background to body", async ({ page }) => {
-    await page.getByRole("button", { name: /Dark/i }).click();
+    await page.click("button[title='Toggle theme']");
     const bgColor = await page.evaluate(() =>
       getComputedStyle(document.body).backgroundColor
     );
@@ -358,12 +358,10 @@ test.describe("Dark Theme", () => {
   });
 
   test("dark theme persists across reload", async ({ page }) => {
-    await page.getByRole("button", { name: /Dark/i }).click();
+    await page.click("button[title='Toggle theme']");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    // Toggle text should show Light option
-    await expect(page.getByRole("button", { name: /Light/i })).toBeVisible();
   });
 });
 
