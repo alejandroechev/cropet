@@ -207,7 +207,7 @@ export default function App() {
             💬 Feedback
           </button>
           <button onClick={() => setDark(!dark)}>
-            {dark ? "☀ Light" : "🌙 Dark"}
+            {dark ? "☀️" : "🌙"}
           </button>
         </div>
       </div>
