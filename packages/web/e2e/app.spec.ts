@@ -424,3 +424,46 @@ test.describe("In-Place Exports", () => {
     await expect(monthlyActions.getByRole("button", { name: /CSV/i })).toBeVisible();
   });
 });
+
+// ─── State Persistence ─────────────────────────────────────────
+
+test.describe("State Persistence", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("climate data persists across reload", async ({ page }) => {
+    const csv = page.locator("textarea.csv-input");
+    const customData = `Date,Tmax,Tmin,RH,Wind,Sunshine\n2024-08-01,30.0,20.0,50,1.5,8.0`;
+    await csv.fill(customData);
+    await page.waitForTimeout(700);
+    await page.reload();
+    await expect(csv).toContainText("2024-08-01");
+  });
+
+  test("station metadata persists across reload", async ({ page }) => {
+    const latInput = page.locator('.location-panel input[type="number"]').first();
+    await latInput.fill("45.5");
+    await page.waitForTimeout(700);
+    await page.reload();
+    await expect(latInput).toHaveValue("45.5");
+  });
+});
+
+// ─── Toolbar Button Order ──────────────────────────────────────
+
+test.describe("Toolbar Button Order", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+  });
+
+  test("buttons in order: Upload, Samples, Compute ETo", async ({ page }) => {
+    const toolbarLeft = page.locator(".toolbar-left");
+    const html = await toolbarLeft.innerHTML();
+    const uploadIdx = html.indexOf("Upload");
+    const samplesIdx = html.indexOf("Samples");
+    const computeIdx = html.indexOf("Compute ETo");
+    expect(uploadIdx).toBeLessThan(samplesIdx);
+    expect(samplesIdx).toBeLessThan(computeIdx);
+  });
+});

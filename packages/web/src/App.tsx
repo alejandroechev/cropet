@@ -22,11 +22,24 @@ const SAMPLE_CSV = `Date,Tmax,Tmin,RH,Wind,Sunshine
 2024-07-06,33.8,25.4,63,2.15,8.75
 2024-07-07,35.5,26.5,58,2.40,10.00`;
 
+const STORAGE_KEY = "cropet-state";
+
+interface SavedState { csv: string; lat: string; alt: string }
+
+function loadSavedState(): SavedState | null {
+  try {
+    const json = localStorage.getItem(STORAGE_KEY);
+    if (!json) return null;
+    return JSON.parse(json);
+  } catch { return null; }
+}
+
 export default function App() {
+  const saved = loadSavedState();
   const [dark, setDark] = useState(() => localStorage.getItem("cropet-theme") === "dark");
-  const [csv, setCsv] = useState(SAMPLE_CSV);
-  const [lat, setLat] = useState("13.73");
-  const [alt, setAlt] = useState("2");
+  const [csv, setCsv] = useState(saved?.csv ?? SAMPLE_CSV);
+  const [lat, setLat] = useState(saved?.lat ?? "13.73");
+  const [alt, setAlt] = useState(saved?.alt ?? "2");
   const [results, setResults] = useState<EToResult[]>([]);
   const [monthly, setMonthly] = useState<MonthlySummary[]>([]);
   const [status, setStatus] = useState("");
@@ -38,6 +51,14 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     localStorage.setItem("cropet-theme", dark ? "dark" : "light");
   }, [dark]);
+
+  // Debounced persistence
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ csv, lat, alt })); } catch { /* noop */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [csv, lat, alt]);
 
   const loadSample = (index: number) => {
     const s = SAMPLES[index];
@@ -142,6 +163,9 @@ export default function App() {
       <div className="toolbar">
         <div className="toolbar-left">
           <h1>🌾 CropET — FAO-56 ETo Calculator</h1>
+          <button onClick={() => fileInputRef.current?.click()}>
+            📂 Upload
+          </button>
           <div className="dropdown" style={{ position: "relative" }}>
             <button onClick={() => setSamplesOpen(!samplesOpen)}>
               📂 Samples
@@ -171,9 +195,6 @@ export default function App() {
               </div>
             )}
           </div>
-          <button onClick={() => fileInputRef.current?.click()}>
-            📂 Upload
-          </button>
           <button className="primary" onClick={compute}>
             ▶ Compute ETo
           </button>
