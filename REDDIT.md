@@ -12,7 +12,7 @@ Built a free web app for computing reference evapotranspiration (ETo) using the 
 
 Handles all the intermediate calculations — saturation vapor pressure, slope of VP curve, extraterrestrial radiation, psychrometric constant. Follows FAO Irrigation & Drainage Paper 56 exactly.
 
-No CROPWAT install, no spreadsheets, no account. Open source.
+Open source and runs in the browser with no install required.
 
 🔗 **Live:** https://cropet.vercel.app
 📂 **Source:** https://github.com/alejandroechev/cropet
@@ -52,3 +52,4 @@ No install, no login, runs client-side. Open source.
 📂 https://github.com/alejandroechev/cropet
 
 Feedback welcome from hydrologists and water resources engineers — what would you add?
+
