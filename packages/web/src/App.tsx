@@ -11,7 +11,6 @@ import {
   type MonthlySummary,
 } from "@cropet/engine";
 import { EToChart } from "./EToChart";
-import { FeedbackModal } from "./FeedbackModal";
 import { SAMPLES } from "./samples";
 
 const SAMPLE_CSV = `Date,Tmax,Tmin,RH,Wind,Sunshine
@@ -45,7 +44,7 @@ export default function App() {
   const [monthly, setMonthly] = useState<MonthlySummary[]>([]);
   const [status, setStatus] = useState("");
   const [samplesOpen, setSamplesOpen] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
+
   const chartRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -205,9 +204,7 @@ export default function App() {
           <button onClick={() => window.open('/intro.html', '_blank')}>
             📖 Guide
           </button>
-          <button onClick={() => setShowFeedback(true)} title="Feedback">
-            💬 Feedback
-          </button>
+          <a href="https://github.com/alejandroechev/cropet/issues" target="_blank" rel="noopener noreferrer" className="github-link">💬 Feedback</a>
           <a href="https://github.com/alejandroechev/cropet" target="_blank" rel="noopener" className="github-link">GitHub</a>
           <button onClick={() => setDark(!dark)} title="Toggle theme">
             {dark ? "☀️" : "🌙"}
@@ -215,7 +212,6 @@ export default function App() {
         </div>
       </div>
 
-      <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} product="CropET" />
 
       <div className="location-panel">
         <label>
